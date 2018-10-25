@@ -1,5 +1,5 @@
 from PIL import Image, ImageDraw, ImageFont
-import re, subprocess, io, requests, sqlite3, configparser, codecs, urllib.parse, urllib.request, json, time, threading, random, hashlib, os.path, traceback
+import re, subprocess, io, requests, sqlite3, configparser, codecs, urllib.parse, urllib.request, json, time, threading, random, hashlib, os.path, traceback, html
 terminated = False
 
 class Bot(threading.Thread):
@@ -21,7 +21,7 @@ class Bot(threading.Thread):
             self.url = None
             raise Exception(obj["description"])
 
-    def sendMessage(self, id, message, reply = None, keyboard = None, preview = True, forceReply = False, notification = True):
+    def sendMessage(self, id, message, reply = None, keyboard = None, preview = True, forceReply = False, notification = True, parse_mode = 'Markdown'):
         data = {"chat_id": str(id), "text": str(message)}
 
         if preview == False:
@@ -38,7 +38,8 @@ class Bot(threading.Thread):
         elif forceReply:
             data["reply_markup"] = '{"force_reply":true}'
 
-        data["parse_mode"] = "Markdown"
+        if parse_mode is not None:
+            data["parse_mode"] = parse_mode
 
         try:
             obj = requests.post(self.url + "sendMessage", data=data).json()
@@ -194,6 +195,28 @@ admins = [
 ]
 
 def receiveMessage(bot, message):
+    # Kontrolu ĉu la mesaĝo estas plusendaĵo
+    try:
+        chat_type = message["chat"]["type"]
+        chat_id = message["chat"]["id"]
+        forward_from = message["forward_from"]
+        forward_from_id = forward_from["id"]
+        message_id = message["message_id"]
+    except KeyError as e:
+        pass
+    else:
+        # Ignoru mesaĝojn kiuj ne estis senditaj al privata grupo (t.e, rekte alsendita al EsperantoBot)
+        if chat_type == 'private':
+            message = ['<a href="tg://user?id={}">{}</a>'.format(forward_from_id, forward_from_id)]
+            if "username" in forward_from:
+                message.append(" (@{})".format(html.escape(forward_from["username"])))
+            message.append("\n")
+            if "first_name" in forward_from:
+                message.append("first_name: {}\n".format(html.escape(forward_from["first_name"])))
+            if "last_name" in forward_from:
+                message.append("last_name: {}\n".format(html.escape(forward_from["last_name"])))
+            bot.sendMessage(chat_id, "".join(message), message_id, parse_mode = "HTML")
+
     if "text" in message:
         splitted = message["text"].split()
         id = message["chat"]["id"]
