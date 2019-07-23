@@ -227,6 +227,11 @@ def receiveMessage(bot, message):
                     bot.deleteMessage(str(message["reply_to_message"]["chat"]["id"]), str(message["reply_to_message"]["message_id"]))
         elif splitted[0] == "/ligiloj":
             bot.sendMessage(id, "Momente vi nur povas vidi la ligilojn al ĉiuj grupoj ĉe mia retejo:\nhttps://telegramo.org/", message["message_id"], '{"hide_keyboard":true}', preview=False)
+        elif splitted[0] == "/cxuk":
+            bot.sendMessage(id,
+                            "“Ĝanĉuk”, aŭ mallonge “ĉuk”, estas indonezia slangaĵo, "
+                            "kiu ĝenerale signifas “fek!” aŭ “intima amiko”",
+                            message["message_id"])
     return True
 
 bot = Bot("TokenHere", receiveMessage)
